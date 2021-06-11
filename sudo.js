@@ -195,20 +195,18 @@ class SudoEdit extends HTMLElement {
 	 * @memberof SudoEdit
 	 */
 	setCursorPos(e) {
-		const x = e.clientX + window.scrollX;
-		const y = e.clientY + window.scrollY;
+		const selfRect = this.getBoundingClientRect();
+		const x = e.clientX - this.leftMargin - selfRect.left;
+		const y = e.clientY - this.topMargin - selfRect.top;
 
 		this.line = Math.max(
-			Math.min(
-				Math.floor((y - this.topMargin) / this.lineHeight),
-				this.content.length - 1
-			),
+			Math.min(Math.floor(y / this.lineHeight), this.content.length - 1),
 			0
 		);
 
 		this.char = Math.max(
 			Math.min(
-				Math.floor((x - this.leftMargin + 2) / this.charWidth),
+				Math.floor((x + 2) / this.charWidth),
 				this.content[this.line].length
 			),
 			0
@@ -239,7 +237,7 @@ class SudoEdit extends HTMLElement {
 	updateProportions() {
 		const txt = document.createElement("span");
 		txt.innerText = "M";
-		this.contentDiv.querySelector(".sudo-line").prepend(txt);
+		this.contentDiv.querySelector(".sudo-line").append(txt);
 		const rect = txt.getBoundingClientRect();
 		const selfRect = this.getBoundingClientRect();
 		this.leftMargin = rect.left - selfRect.left;

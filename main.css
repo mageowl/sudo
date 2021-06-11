@@ -21,7 +21,6 @@ sudo-edit {
 	box-shadow: 0px 5px 10px rgba(68, 68, 68, 0.548);
 	border-radius: 10px;
 	padding: 50px 0 0 20px;
-	box-sizing: border-box;
 	font-family: monospace;
 	cursor: text;
 	counter-reset: line;
@@ -29,7 +28,6 @@ sudo-edit {
 
 sudo-edit:focus {
 	outline: none;
-	border: #3466f0 1px solid;
 }
 
 sudo-edit .sudo-cursor {
