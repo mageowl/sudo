@@ -63,6 +63,11 @@ class SudoEdit extends HTMLElement {
 	 * @memberof SudoEdit
 	 */
 	cursor = null;
+	/**
+	 * @type {HTMLDivElement}
+	 *
+	 * @memberof SudoEdit
+	 */
 	contentDiv = null;
 
 	constructor() {
@@ -234,13 +239,13 @@ class SudoEdit extends HTMLElement {
 	updateProportions() {
 		const txt = document.createElement("span");
 		txt.innerText = "M";
-		this.contentDiv.querySelector(".sudo-line").appendChild(txt);
+		this.contentDiv.querySelector(".sudo-line").prepend(txt);
 		const rect = txt.getBoundingClientRect();
 		const selfRect = this.getBoundingClientRect();
 		this.leftMargin = rect.left - selfRect.left;
 		this.topMargin = rect.top - selfRect.top;
-		this.charWidth = rect.right - rect.left;
-		this.lineHeight = (rect.bottom - rect.top) * this.dataset.lineHeight;
+		this.charWidth = rect.width;
+		this.lineHeight = rect.height * this.dataset.lineHeight;
 		txt.remove();
 	}
 
