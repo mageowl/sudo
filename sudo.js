@@ -33,12 +33,29 @@ function removeChar(str, i) {
 	return str.slice(0, i) + str.slice(i + 1);
 }
 
+/**
+ * Get HTML-safe version of text.
+ *
+ * @param {string} str
+ * @returns {string}
+ */
+function safe(str) {
+	const el = document.createElement("div");
+	el.innerText = str;
+	let result = el.innerHTML;
+	el.remove();
+	return result;
+}
+
 class SudoEdit extends HTMLElement {
 	content = [""];
 	cache = null;
 	line = 0;
 	char = 0;
 	leftMargin = null;
+	topMargin = null;
+	charWidth = null;
+	lineHeight = null;
 
 	/**
 	 * @type {HTMLSpanElement}
@@ -46,6 +63,11 @@ class SudoEdit extends HTMLElement {
 	 * @memberof SudoEdit
 	 */
 	cursor = null;
+	/**
+	 * @type {HTMLDivElement}
+	 *
+	 * @memberof SudoEdit
+	 */
 	contentDiv = null;
 
 	constructor() {
@@ -53,6 +75,7 @@ class SudoEdit extends HTMLElement {
 
 		this.style.display = "block";
 		this.style.position = "relative";
+		this.style.userSelect = "none";
 		this.tabIndex = 0;
 
 		this.cursor = document.createElement("span");
@@ -66,11 +89,18 @@ class SudoEdit extends HTMLElement {
 		this.appendChild(this.contentDiv);
 
 		this.addEventListener("keydown", this.keyPress);
+		this.addEventListener("click", this.setCursorPos);
 
 		this.updateContent();
 	}
 
-	keyPress(e) {
+	/**
+	 * Handle key press
+	 *
+	 * @param {KeyboardEvent} e
+	 * @memberof SudoEdit
+	 */
+	async keyPress(e) {
 		const key = e.key;
 		/** @type {"current" | "all" | "cursor"} */
 		let update = "current";
@@ -135,11 +165,56 @@ class SudoEdit extends HTMLElement {
 			this.char = 0;
 			this.content = insertArr(this.content, "", this.line);
 			update = "all";
+		} else if (key === "v" && e.metaKey) {
+			const text = (await navigator.clipboard.readText()).split("\n");
+			text.forEach((txt, i) => {
+				this.content[this.line] = insert(
+					this.content[this.line],
+					txt,
+					this.char
+				);
+				this.char += txt.length;
+				if (i < text.length) {
+					this.line++;
+					this.char = 0;
+					this.content = insertArr(this.content, "", this.line);
+					update = "all";
+				}
+			});
 		}
 
 		if (update === "current") this.updateContent(this.line);
 		else if (update === "cursor") this.updateCursor();
 		else if (update === "all") this.updateContent();
+	}
+
+	/**
+	 * Set cursor position
+	 *
+	 * @param {MouseEvent} e
+	 * @memberof SudoEdit
+	 */
+	setCursorPos(e) {
+		const x = e.clientX + window.scrollX;
+		const y = e.clientY + window.scrollY;
+
+		this.line = Math.max(
+			Math.min(
+				Math.floor((y - this.topMargin) / this.lineHeight),
+				this.content.length - 1
+			),
+			0
+		);
+
+		this.char = Math.max(
+			Math.min(
+				Math.floor((x - this.leftMargin + 2) / this.charWidth),
+				this.content[this.line].length
+			),
+			0
+		);
+
+		this.updateCursor();
 	}
 
 	formatContent(lines) {
@@ -151,9 +226,9 @@ class SudoEdit extends HTMLElement {
 			: Object.keys(this.content).map((v) => parseInt(v))
 		).forEach((index) => {
 			const line = this.content[index];
-			result[
-				index
-			] = `<div class="sudo-line" style="height:${this.dataset.lineHeight}em;">${line}</div>`;
+			result[index] = `<div class="sudo-line" style="height:${
+				this.lineHeight
+			}px;">${safe(line)}</div>`;
 		});
 
 		this.cache = result;
@@ -161,24 +236,25 @@ class SudoEdit extends HTMLElement {
 		return result.join("");
 	}
 
-	updateMargin() {
+	updateProportions() {
 		const txt = document.createElement("span");
-		this.contentDiv.querySelector(".sudo-line").appendChild(txt);
-		this.leftMargin =
-			txt.getBoundingClientRect().left - this.getBoundingClientRect().left;
-		this.topMargin =
-			txt.getBoundingClientRect().top - this.getBoundingClientRect().top;
+		txt.innerText = "M";
+		this.contentDiv.querySelector(".sudo-line").prepend(txt);
+		const rect = txt.getBoundingClientRect();
+		const selfRect = this.getBoundingClientRect();
+		this.leftMargin = rect.left - selfRect.left;
+		this.topMargin = rect.top - selfRect.top;
+		this.charWidth = rect.width;
+		this.lineHeight = rect.height * this.dataset.lineHeight;
 		txt.remove();
 	}
 
 	updateCursor() {
-		if (this.leftMargin === null) this.updateMargin();
-		this.cursor.style.left = `calc(${this.char * 0.615}em + ${
-			this.leftMargin
-		}px)`;
-		this.cursor.style.top = `calc(${this.line * this.dataset.lineHeight}em + ${
-			this.topMargin
-		}px)`;
+		if (this.leftMargin === null) this.updateProportions();
+		this.cursor.style.left = `${
+			this.char * this.charWidth + this.leftMargin
+		}px`;
+		this.cursor.style.top = `${this.line * this.lineHeight + this.topMargin}px`;
 	}
 
 	updateContent(...lines) {

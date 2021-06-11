@@ -2,26 +2,43 @@ body {
 	margin: 0;
 }
 
+#page {
+	display: flex;
+	flex-direction: column;
+	height: calc(100% - 100px);
+	padding: 50px;
+	overflow: auto;
+	font-family: monospace;
+}
+
+#page .header {
+	flex: 0 1 auto;
+}
+
 sudo-edit {
+	flex: 1 1 auto;
 	width: 100%;
-	/* box-shadow: 0px 5px 10px rgba(68, 68, 68, 0.548); */
-	height: 100%;
-	/* border-radius: 10px; */
+	box-shadow: 0px 5px 10px rgba(68, 68, 68, 0.548);
+	border-radius: 10px;
 	padding: 50px 0 0 20px;
 	box-sizing: border-box;
 	font-family: monospace;
 	cursor: text;
 	counter-reset: line;
-	overflow: auto;
 }
 
 sudo-edit:focus {
 	outline: none;
-	/* border: #3466f0 1px solid; */
+	border: #3466f0 1px solid;
 }
 
 sudo-edit .sudo-cursor {
 	border-left: 1px solid black;
+	display: none;
+}
+
+sudo-edit:focus .sudo-cursor {
+	display: block;
 }
 
 sudo-edit .sudo-selection {
@@ -38,4 +55,5 @@ sudo-edit .sudo-line::before {
 	text-align: right;
 	width: 3em;
 	display: inline-block;
+	font-family: monoregular, monospace;
 }
